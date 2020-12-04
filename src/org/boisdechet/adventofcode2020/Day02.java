@@ -46,7 +46,7 @@ public class Day02 {
     }
 
     /**
-     * Part 1
+     * Part 2
      */
     public static long part2(String sample) throws IOException {
         BufferedReader input = InputUtil.readInput(2, sample);
