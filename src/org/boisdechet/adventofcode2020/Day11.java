@@ -28,6 +28,16 @@ public class Day11 {
         return x >= 0 && x < grid[0].length && y >= 0 && y < grid.length && grid[y][x] == OCCUPIED;
     }
 
+    private static boolean isVisible(short[][] grid, int x, int y, int incX, int incY) {
+        while(true) {
+            x += incX;
+            y += incY;
+            if(x < 0 || x >= grid[0].length || y < 0 || y >= grid.length || grid[y][x] == EMPTY) break;
+            if(grid[y][x] == OCCUPIED) return true;
+        }
+        return false;
+    }
+
     private static int occupiedSeats(short[][] grid, int x, int y) {
         int count = 0;
         if(isOccupied(grid, x-1, y-1)) count++;
@@ -41,38 +51,20 @@ public class Day11 {
         return count;
     }
 
-    private static void increment(short[][] grid, int x, int y) {
-        if( x >= 0 && x < grid[0].length && y >= 0 && y < grid.length ) {
-            grid[y][x]++;
-        }
+    private static int occupiedVisibleSeats(short[][] grid, int x, int y) {
+        int count = 0;
+        if(isVisible(grid, x, y, -1, -1)) count++;
+        if(isVisible(grid, x, y, -1, 0)) count++;
+        if(isVisible(grid, x, y, -1, 1)) count++;
+        if(isVisible(grid, x, y, 0, -1)) count++;
+        if(isVisible(grid, x, y, 0, 1)) count++;
+        if(isVisible(grid, x, y, 1, -1)) count++;
+        if(isVisible(grid, x, y, 1, 0)) count++;
+        if(isVisible(grid, x, y, 1, 1)) count++;
+        return count;
     }
 
-    /**
-     * Fills count array with the number of occupied seats adjacent
-     * @param grid original states
-     * @param count number of occupied seats adjacent in all 8 directions
-     */
-    private static void fillOccupiedGrid(short[][] grid, short[][] count) {
-        for(int y = 0; y < grid.length; y++) {
-            for (int x = 0; x < grid[0].length; x++) {
-                if(grid[y][x] == OCCUPIED) {
-                    increment(count, x-1, y-1);
-                    increment(count, x, y-1);
-                    increment(count, x, y+1);
-                    increment(count, x-1, y);
-                    increment(count, x+1, y);
-                    increment(count, x-1, y+1);
-                    increment(count, x, y+1);
-                    increment(count, x+1, y+1);
-                }
-            }
-        }
-    }
-
-    /**
-     * Part 1
-     */
-    public static long part1(String sample) throws IOException {
+    private static long solve(String sample, boolean adjacentOnly) throws IOException {
         String input = InputUtil.readInputAsString(11, sample).trim();
         String[] lines = input.split("\n");
         short[][] grid = new short[lines.length][lines[0].length()];
@@ -92,18 +84,34 @@ public class Day11 {
             short[][] newGrid = new short[grid.length][grid[0].length];
             for(int y = 0; y < grid.length; y++) {
                 for (int x = 0; x < grid[0].length; x++) {
-                    if(grid[y][x] == EMPTY && occupiedSeats(grid, x, y) == 0) {
-                        newGrid[y][x] = OCCUPIED;
-                        changed = true;
-                    } else if(grid[y][x] == OCCUPIED && occupiedSeats(grid, x, y) >= 4) {
-                        newGrid[y][x] = EMPTY;
-                        changed = true;
-                    } else {
-                        newGrid[y][x] = grid[y][x];
+                    // part 1 : consider only adjacent seats
+                    if(adjacentOnly) {
+                        if (grid[y][x] == EMPTY && occupiedSeats(grid, x, y) == 0) {
+                            newGrid[y][x] = OCCUPIED;
+                            changed = true;
+                        } else if (grid[y][x] == OCCUPIED && occupiedSeats(grid, x, y) >= 4) {
+                            newGrid[y][x] = EMPTY;
+                            changed = true;
+                        } else {
+                            newGrid[y][x] = grid[y][x];
+                        }
+                    }
+                    // part 2 : consider visible seats
+                    else {
+                        if (grid[y][x] == EMPTY && occupiedVisibleSeats(grid, x, y) == 0) {
+                            newGrid[y][x] = OCCUPIED;
+                            changed = true;
+                        } else if (grid[y][x] == OCCUPIED && occupiedVisibleSeats(grid, x, y) >= 5) {
+                            newGrid[y][x] = EMPTY;
+                            changed = true;
+                        } else {
+                            newGrid[y][x] = grid[y][x];
+                        }
                     }
                 }
             }
             grid = newGrid;
+            //dumpGrid(grid);
         }
         //dumpGrid(grid);
 
@@ -116,11 +124,19 @@ public class Day11 {
         return count;
     }
 
+
+    /**
+     * Part 1
+     */
+    public static long part1(String sample) throws IOException {
+        return solve(sample, true);
+    }
+
     /**
      * Part 2
      */
     public static long part2(String sample) throws IOException {
-        return 0L;
+        return solve(sample, false);
     }
 
 
@@ -128,7 +144,7 @@ public class Day11 {
         Log.welcome();
         try {
             Log.i(String.format("Seats ended up occupied : %d", part1(null)));
-            //Log.i(String.format("Total number of distinct ways : %d", part2(null)));
+            Log.i(String.format("Seats ended up occupied : %d", part2(null)));
         } catch(Exception exc) {
             Log.w(String.format("Error during execution: %s", exc.getMessage()));
             exc.printStackTrace();

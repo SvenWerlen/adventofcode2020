@@ -12,10 +12,10 @@ class Day11Test {
     @Test
     public void examples() throws Exception {
         assertEquals(37, Day11.part1("s1"));
-        //assertEquals(220, Day11.part1("s2"));
+        assertEquals(26, Day11.part2("s1"));
         // puzzle answers
         assertEquals(2412, Day11.part1(null));
-        //assertEquals(42313823813632L, Day11.part2(null));
+        assertEquals(2176, Day11.part2(null));
     }
 
 }
