@@ -19,10 +19,6 @@ public class Day12 {
         }
     }
 
-    private static double getAngleInDegrees(double east, double north) {
-        return Math.tan(north/east) * 180 / Math.PI;
-    }
-
     /**
      * Part 1
      */
@@ -45,7 +41,7 @@ public class Day12 {
             else if( action == 'L' ) ship.direction = (ship.direction + dist) % 360;
             else if( action == 'R' ) ship.direction = (ship.direction + 360 - dist) % 360;
             else if( action == 'F' ) {
-                double angleRad = ship.direction * Math.PI / 180;
+                double angleRad = Math.toRadians(ship.direction);
                 ship.east += Math.round(Math.cos(angleRad) * dist);
                 ship.north += Math.round(Math.sin(angleRad) * dist);
             } else {
