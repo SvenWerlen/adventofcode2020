@@ -14,14 +14,11 @@ public class Day19 {
     // global variables
     private static String regex31 = null;
     private static String regex42 = null;
-    private static Pattern pattern31 = null;
-    private static Pattern pattern42 = null;
 
-
-    private static String buildRegex(Map<Integer, String> rules, String rule, boolean replace) {
+    private static String buildRegex(Map<Integer, String> rules, String rule, int replaceCount) {
         int idx = rule.indexOf('|');
         if(idx >=0) {
-            return String.format("(?:%s|%s)", buildRegex(rules, rule.substring(0, idx), replace), buildRegex(rules, rule.substring(idx+1), replace));
+            return String.format("(?:%s|%s)", buildRegex(rules, rule.substring(0, idx), replaceCount), buildRegex(rules, rule.substring(idx+1), replaceCount));
         }
         idx = rule.indexOf('"');
         if(idx >= 0) {
@@ -31,12 +28,12 @@ public class Day19 {
         String[] parts = rule.trim().split(" ");
         for(String p : parts) {
             int ruleNo = Integer.parseInt(p);
-            if(replace && ruleNo == 8) {
+            if(replaceCount > 0 && ruleNo == 8) {
                 builder.append(String.format("(?:%s)+", regex42));
-            } else if(replace && ruleNo == 11) {
-                builder.append(String.format("(%s+)(%s+)", regex42, regex31));
+            } else if(replaceCount > 0 && ruleNo == 11) {
+                builder.append(regex42.repeat(replaceCount)).append(regex31.repeat(replaceCount));
             } else {
-                builder.append(buildRegex(rules, rules.get(ruleNo), replace));
+                builder.append(buildRegex(rules, rules.get(ruleNo), replaceCount));
             }
         }
         return builder.toString();
@@ -59,29 +56,27 @@ public class Day19 {
         }
 
         if(replace) {
-            regex31 = buildRegex(rules, rules.get(31), true);
-            regex42 = buildRegex(rules, rules.get(42), true);
-            pattern31 = Pattern.compile(regex31);
-            pattern42 = Pattern.compile(regex42);
-            //System.out.println(regex31);
-            //System.out.println(regex42);
+            regex31 = buildRegex(rules, rules.get(31), 0);
+            regex42 = buildRegex(rules, rules.get(42), 0);
         }
 
-        String regex = buildRegex(rules, rules.get(0), replace);
         //System.out.println("Regex : " + regex);
-        Pattern p = Pattern.compile(regex);
+        List<Pattern> patterns = new ArrayList<>();
+        if(!replace) {
+            patterns.add(Pattern.compile(buildRegex(rules, rules.get(0), 0)));
+        } else {
+            for(int i=1; i<=10; i++) {
+                patterns.add(Pattern.compile(buildRegex(rules, rules.get(0), i)));
+            }
+        }
 
         long count = 0L;
         for(String msg : messages) {
-            Matcher m = p.matcher(msg);
-            if(m.matches()) {
-                if(m.groupCount() != 0) {
-                    long count1 = pattern42.matcher(m.group(1)).results().count();
-                    long count2 = pattern31.matcher(m.group(2)).results().count();
-                    System.out.println(count1 + " vs " + count2);
-                    if(count1 != count2) continue;
+            for(Pattern p : patterns) {
+                if (p.matcher(msg).matches()) {
+                    count++;
+                    break;
                 }
-                count++;
             }
         }
         return count;
