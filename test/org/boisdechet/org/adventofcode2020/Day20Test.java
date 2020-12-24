@@ -15,7 +15,7 @@ class Day20Test {
         assertEquals(273, Day20.part2("s1"));
         // puzzle answers
         assertEquals(29125888761511L, Day20.part1(null));
-        //assertEquals(316, Day19.part2(null));
+        assertEquals(2219, Day20.part2(null));
     }
 
 }

@@ -271,8 +271,21 @@ public class Day20 {
             throw new IllegalStateException("Couldn't make it fit!");
         }
 
-        private static void dump(String s) {
-
+        /**
+         * Event with regex, multiple iterations of replacement might be required
+         */
+        public boolean findAndReplaceAll(Pattern p) {
+            StringBuilder builder = new StringBuilder();
+            for (int i : pixels) builder.append(MAP[i]);
+            // look for see monsters and replace if found
+            Matcher m = p.matcher(builder.toString());
+            if(!m.find()) {
+                return false;
+            }
+            String puzzle2 = m.replaceAll("O$1O$2OO$3OO$4OOO$5O$6O$7O$8O$9O$10O");
+            parseAll(puzzle2.replaceAll("(.{" + size + "})", "$1\n"));
+            while(findAndReplaceAll(p)) {}
+            return true;
         }
 
         /**
@@ -282,28 +295,26 @@ public class Day20 {
          *  2 = O (part of the sea monster)
          */
         public long seaMonsters() {
-            Pattern p = Pattern.compile("[#O](.{" + (size-19) + "})[#O](.{4})[#O]{2}(.{4})[#O]{2}(.{4})[#O]{3}(.{" + (size-19) + "})[#O](.{2})[#O](.{2})[#O](.{2})[#O](.{2})[#O](.{2})[#O]");
+            Pattern p = Pattern.compile("#(.{" + (size-19) + "})#(.{4})#{2}(.{4})#{2}(.{4})#{3}(.{" + (size-19) + "})#(.{2})#(.{2})#(.{2})#(.{2})#(.{2})#");
 
             int comb = 0;
-            while(comb <= 8) {
-                // generate map on single line
-                StringBuilder builder = new StringBuilder();
-                for (int i : pixels) builder.append(MAP[i]);
-                // look for see monsters and replace if found
-                Matcher m = p.matcher(builder.toString());
-                if (m.find()) {
-                    String puzzle2 = m.replaceAll("O$1O$2OO$3OO$4OOO$5O$6O$7O$8O$9O$10O");
-                    parseAll(puzzle2.replaceAll("(.{" + size + "})", "$1\n"));
-                    break;
-                }
+            while(comb <= 8 && !findAndReplaceAll(p)) {
                 // another combination
                 comb++;
-
                 if(comb == 4) flipH();
                 else rotate90();
             }
 
-            System.out.println(this);
+            StringBuilder builder = new StringBuilder();
+            for (int i : pixels) builder.append(MAP[i]);
+            // look for see monsters and replace if found
+            Matcher m = p.matcher(builder.toString());
+            if (m.find()) {
+                m = p.matcher(builder.toString());
+                String puzzle2 = m.replaceAll("O$1O$2OO$3OO$4OOO$5O$6O$7O$8O$9O$10O");
+                parseAll(puzzle2.replaceAll("(.{" + size + "})", "$1\n"));
+
+            }
 
             // count other tiles
             long count = 0;
@@ -501,7 +512,7 @@ public class Day20 {
     public static void main(String[] args) {
         Log.welcome();
         try {
-            //Log.i(String.format("IDs of the four corner tiles multiplied : %d", part1(null)));
+            Log.i(String.format("IDs of the four corner tiles multiplied : %d", part1(null)));
             Log.i(String.format("Answer part2 : %d", part2(null)));
         } catch(Exception exc) {
             Log.w(String.format("Error during execution: %s", exc.getMessage()));
