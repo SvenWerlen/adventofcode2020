@@ -12,6 +12,7 @@ class Day20Test {
     @Test
     public void examples() throws Exception {
         assertEquals(20899048083289L, Day20.part1("s1"));
+        assertEquals(273, Day20.part2("s1"));
         // puzzle answers
         assertEquals(29125888761511L, Day20.part1(null));
         //assertEquals(316, Day19.part2(null));
