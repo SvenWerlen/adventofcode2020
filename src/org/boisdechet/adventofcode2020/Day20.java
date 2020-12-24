@@ -67,10 +67,15 @@ public class Day20 {
         private static final int BOTTOM = 2;
         private static final int LEFT = 3;
 
+        private static final int NOTHING = 0;
+        private static final int SOMETHING = 1;
+        private static final int SEAMONSTER = 2;
+
+        private static final char[] MAP = new char[] { '.', '#', 'O' };
 
         int id;
         int size;
-        boolean[] pixels;
+        int[] pixels;
         List<Match> matches = new ArrayList<>();    // list of matches (tile that has an edge that can match)
 
         private Tile() {}
@@ -80,17 +85,29 @@ public class Day20 {
         public Tile(int id, int size) {
             this.id = id;
             this.size = size;
-            pixels = new boolean[size*size];
+            pixels = new int[size*size];
         }
 
         /**
-         * Function which parses 1 line of text and updates the pixes accordingly
+         * Function which parses 1 line of text and updates the pixels accordingly
          */
         public void parse(int idx, String line) {
             for(int i=0; i<line.length(); i++) {
-                if(line.charAt(i) == '#') {
-                    pixels[idx*size+i] = true;
+                if(line.charAt(i) == MAP[SOMETHING]) {
+                    pixels[idx*size+i] = SOMETHING;
+                } else if(line.charAt(i) == MAP[SEAMONSTER]) {
+                    pixels[idx*size+i] = SEAMONSTER;
                 }
+            }
+        }
+
+        /**
+         * Function which parses a block of text and updates the pixels accordingly
+         */
+        public void parseAll(String block) {
+            String[] lines = block.split("\n");
+            for(int i=0; i<lines.length; i++) {
+                parse(i, lines[i]);
             }
         }
 
@@ -102,8 +119,8 @@ public class Day20 {
             StringBuilder builder = new StringBuilder();
             builder.append("Tile ").append(id).append(":\n");
             int idx = 0;
-            for(boolean b : pixels) {
-                builder.append(b ? '#' : '.');
+            for(int i : pixels) {
+                builder.append(MAP[i]);
                 if(++idx % size == 0) builder.append('\n');
             }
             builder.append('\n');
@@ -113,7 +130,7 @@ public class Day20 {
         public String rowToString(int row) {
             StringBuilder builder = new StringBuilder();
             for(int i=0; i<size; i++) {
-                builder.append(pixels[row*size+i] ? '#' : '.');
+                builder.append(MAP[pixels[row*size+i]]);
             }
             return builder.toString();
         }
@@ -122,8 +139,8 @@ public class Day20 {
          * Returns a list of pixels for the given edge (always left to right, top to bottom)
          * (0: top, 1:right, 2:bottom, 3:left)
          */
-        private boolean[] getEdge(int edgeNo) {
-            boolean[] values = new boolean[size];
+        private int[] getEdge(int edgeNo) {
+            int[] values = new int[size];
             if(edgeNo == TOP) {
                 for(int i=0; i<size; i++) values[i] = pixels[i];
             } else if(edgeNo == RIGHT) {
@@ -139,8 +156,8 @@ public class Day20 {
         /**
          * Utility to reverse an edge (flip)
          */
-        public boolean[] reverse(boolean[] edge) {
-            boolean[] result = new boolean[size];
+        public int[] reverse(int[] edge) {
+            int[] result = new int[size];
             for(int i=0; i<edge.length; i++) result[i] = edge[size-1-i];
             return result;
         }
@@ -151,8 +168,8 @@ public class Day20 {
         public void generateMatches(Tile tile) {
             for(int i=0; i<4; i++) {
                 for(int j=0; j<4; j++) {
-                    boolean[] edge1 = getEdge(i);
-                    boolean[] edge2 = tile.getEdge(j);
+                    int[] edge1 = getEdge(i);
+                    int[] edge2 = tile.getEdge(j);
                     if(Arrays.equals(edge1, edge2) || Arrays.equals(reverse(edge1), edge2)) {
                         matches.add(new Match(tile, i, j));
                         tile.matches.add(new Match(this, j, i));
@@ -166,7 +183,7 @@ public class Day20 {
          * Rotates the tile (90 deg clockwise)
          */
         public void rotate90() {
-            boolean[] newPixels = new boolean[size*size];
+            int[] newPixels = new int[size*size];
             for(int x=0; x<size; x++) {
                 for(int y=0; y<size; y++) {
                     int xN = size - y - 1;
@@ -185,7 +202,7 @@ public class Day20 {
          * Flips the tile horizontally
          */
         public void flipH() {
-            boolean[] newPixels = new boolean[size*size];
+            int[] newPixels = new int[size*size];
             for(int x=0; x<size; x++) {
                 for(int y=0; y<size; y++) {
                     int xN = x;
@@ -204,7 +221,7 @@ public class Day20 {
          * Flips the tile vertically
          */
         public void flipV() {
-            boolean[] newPixels = new boolean[size*size];
+            int[] newPixels = new int[size*size];
             for(int x=0; x<size; x++) {
                 for(int y=0; y<size; y++) {
                     int xN = size - x - 1;
@@ -254,6 +271,47 @@ public class Day20 {
             throw new IllegalStateException("Couldn't make it fit!");
         }
 
+        private static void dump(String s) {
+
+        }
+
+        /**
+         * Marks all sea monsters
+         *  0 = nothing
+         *  1 = #
+         *  2 = O (part of the sea monster)
+         */
+        public long seaMonsters() {
+            Pattern p = Pattern.compile("[#O](.{" + (size-19) + "})[#O](.{4})[#O]{2}(.{4})[#O]{2}(.{4})[#O]{3}(.{" + (size-19) + "})[#O](.{2})[#O](.{2})[#O](.{2})[#O](.{2})[#O](.{2})[#O]");
+
+            int comb = 0;
+            while(comb <= 8) {
+                // generate map on single line
+                StringBuilder builder = new StringBuilder();
+                for (int i : pixels) builder.append(MAP[i]);
+                // look for see monsters and replace if found
+                Matcher m = p.matcher(builder.toString());
+                if (m.find()) {
+                    String puzzle2 = m.replaceAll("O$1O$2OO$3OO$4OOO$5O$6O$7O$8O$9O$10O");
+                    parseAll(puzzle2.replaceAll("(.{" + size + "})", "$1\n"));
+                    break;
+                }
+                // another combination
+                comb++;
+
+                if(comb == 4) flipH();
+                else rotate90();
+            }
+
+            System.out.println(this);
+
+            // count other tiles
+            long count = 0;
+            for(int i : pixels) {
+                if(i == SOMETHING) count++;
+            }
+            return count;
+        }
     }
 
     /**
@@ -288,7 +346,6 @@ public class Day20 {
                 b.append('\n');
             }
         }
-        System.out.println(b.toString());
         // build new tile
         Tile result = new Tile(0, size * (TILE_SIZE-2));
         int line = 0;
@@ -434,11 +491,11 @@ public class Day20 {
             }
         }
 
-        dumpPuzzle(puzzle);
-        Tile result = getPuzzleWithoutTileBorder(puzzle);
-        System.out.println(result);
+        // dumpPuzzle(puzzle);
 
-        return 0L;
+        // and find the sea monster
+        Tile result = getPuzzleWithoutTileBorder(puzzle);
+        return result.seaMonsters();
     }
 
     public static void main(String[] args) {
