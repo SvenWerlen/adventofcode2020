@@ -15,7 +15,7 @@ class Day24Test {
         assertEquals(2208, Day24.part2("s1"));
         // puzzle answers
         assertEquals(322, Day24.part1(null));
-        //assertEquals(322, Day24.part2(null));
+        assertEquals(3831, Day24.part2(null));
     }
 
 }
